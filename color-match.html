@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Match - PlayMate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/styles.css">
+    <style>
+        .color-match-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .score-display {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .score-display h3 {
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .pattern-display {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pattern-grid {
+            display: grid;
+            gap: 8px;
+            margin: 1rem auto;
+            max-width: 300px;
+        }
+        
+        .pattern-cell {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pattern-cell:hover {
+            transform: scale(1.05);
+        }
+        
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .color-option {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: #8B5CF6;
+            transform: scale(1.1);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .timer-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #8B5CF6);
+            transition: width 0.1s linear;
+        }
+        
+        @media (max-width: 768px) {
+            .color-option {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .pattern-cell {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-button" onclick="navigateToGames()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to Games
+            </button>
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="#8B5CF6" stroke="#7C3AED" stroke-width="2"/>
+                    <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>Color Match</h1>
+            </div>
+            <div class="game-controls">
+                <button class="game-btn secondary" onclick="resetGame()">Reset</button>
+                <button class="game-btn secondary" onclick="pauseGame()">Pause</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="game-container">
+                <div class="game-header-bar">
+                    <h2 class="game-title">Color Match</h2>
+                    <div class="game-stats">
+                        <span>Level: <span id="currentLevel">1</span></span>
+                        <span>Score: <span id="currentScore">0</span></span>
+                    </div>
+                </div>
+
+                <div class="color-match-container">
+                    <div class="game-info">
+                        <div class="score-display">
+                            <h3>Level</h3>
+                            <div id="level">1</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Score</h3>
+                            <div id="score">0</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Time Left</h3>
+                            <div id="timeLeft">30</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>High Score</h3>
+                            <div id="highScore">0</div>
+                        </div>
+                    </div>
+
+                    <div class="pattern-display">
+                        <h3>Match this pattern:</h3>
+                        <div class="pattern-grid" id="patternGrid">
+                            <!-- Pattern will be shown here -->
+                        </div>
+                        <div class="timer-bar">
+                            <div class="timer-fill" id="timerFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="color-options" id="colorOptions">
+                        <!-- Color options will be populated here -->
+                    </div>
+
+                    <div class="controls">
+                        <button class="game-btn primary" onclick="checkPattern()">Check Pattern</button>
+                        <button class="game-btn secondary" onclick="resetGame()">Restart</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+    <script>
+        // Color Match Game Logic
+        class ColorMatchGame {
+            constructor() {
+                this.currentLevel = 1;
+                this.score = 0;
+                this.timeLeft = 30;
+                this.timerInterval = null;
+                this.isPaused = false;
+                this.pattern = [];
+                this.playerPattern = [];
+                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+                this.gridSize = 3;
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadProgress();
+                this.generateLevel();
+                this.startTimer();
+                this.updateDisplay();
+            }
+            
+            loadProgress() {
+                const progress = StorageManager.getGameProgress('color-match');
+                this.currentLevel = progress.level || 1;
+                this.score = progress.score || 0;
+                document.getElementById('highScore').textContent = progress.highScore || 0;
+            }
+            
+            saveProgress() {
+                const progress = {
+                    level: this.currentLevel,
+                    score: this.score,
+                    highScore: Math.max(this.score, StorageManager.getGameProgress('color-match').highScore)
+                };
+                StorageManager.setGameProgress('color-match', progress);
+            }
+            
+            generateLevel() {
+                this.gridSize = Math.min(3 + Math.floor(this.currentLevel / 5), 6);
+                this.timeLeft = Math.max(30 - this.currentLevel * 2, 15);
+                this.pattern = this.generatePattern();
+                this.playerPattern = [];
+                
+                this.renderPattern();
+                this.renderColorOptions();
+                this.updateDisplay();
+            }
+            
+            generatePattern() {
+                const pattern = [];
+                const numColors = Math.min(4 + Math.floor(this.currentLevel / 3), this.colors.length);
+                const availableColors = this.colors.slice(0, numColors);
+                
+                for (let i = 0; i < this.gridSize * this.gridSize; i++) {
+                    pattern.push(availableColors[Math.floor(Math.random() * availableColors.length)]);
+                }
+                
+                return pattern;
+            }
+            
+            renderPattern() {
+                const patternGrid = document.getElementById('patternGrid');
+                patternGrid.innerHTML = '';
+                patternGrid.style.gridTemplateColumns = `repeat(${this.gridSize}, 1fr)`;
+                
+                this.pattern.forEach((color, index) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'pattern-cell';
+                    cell.style.backgroundColor = color;
+                    patternGrid.appendChild(cell);
+                });
+            }
+            
+            renderColorOptions() {
+                const colorOptions = document.getElementById('colorOptions');
+                colorOptions.innerHTML = '';
+                
+                const numColors = Math.min(4 + Math.floor(this.currentLevel / 3), this.colors.length);
+                const availableColors = this.colors.slice(0, numColors);
+                
+                availableColors.forEach(color => {
+                    const option = document.createElement('div');
+                    option.className = 'color-option';
+                    option.style.backgroundColor = color;
+                    option.dataset.color = color;
+                    
+                    option.addEventListener('click', () => this.selectColor(color));
+                    colorOptions.appendChild(option);
+                });
+            }
+            
+            selectColor(color) {
+                if (this.isPaused) return;
+                
+                this.playerPattern.push(color);
+                
+                // Update selected color
+                document.querySelectorAll('.color-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                document.querySelector(`[data-color="${color}"]`).classList.add('selected');
+                
+                SoundManager.playSound('click');
+                
+                // Auto-check if pattern is complete
+                if (this.playerPattern.length === this.pattern.length) {
+                    setTimeout(() => this.checkPattern(), 500);
+                }
+            }
+            
+            checkPattern() {
+                if (this.playerPattern.length !== this.pattern.length) {
+                    showNotification('Complete the pattern first!', 'error');
+                    return;
+                }
+                
+                const isCorrect = this.playerPattern.every((color, index) => color === this.pattern[index]);
+                
+                if (isCorrect) {
+                    const timeBonus = this.timeLeft * 10;
+                    this.score += 100 * this.currentLevel + timeBonus;
+                    this.currentLevel++;
+                    
+                    SoundManager.playSound('success');
+                    showNotification(`Level ${this.currentLevel - 1} Complete! +${timeBonus} time bonus`, 'success');
+                    
+                    this.saveProgress();
+                    setTimeout(() => {
+                        this.generateLevel();
+                    }, 1500);
+                } else {
+                    this.score = Math.max(0, this.score - 50);
+                    SoundManager.playSound('error');
+                    showNotification('Pattern incorrect! Try again.', 'error');
+                    
+                    this.playerPattern = [];
+                    document.querySelectorAll('.color-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                }
+                
+                this.updateDisplay();
+            }
+            
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused && this.timeLeft > 0) {
+                        this.timeLeft--;
+                        this.updateTimer();
+                        
+                        if (this.timeLeft === 0) {
+                            this.gameOver();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            updateTimer() {
+                document.getElementById('timeLeft').textContent = this.timeLeft;
+                const percentage = (this.timeLeft / 30) * 100;
+                document.getElementById('timerFill').style.width = `${percentage}%`;
+            }
+            
+            gameOver() {
+                clearInterval(this.timerInterval);
+                showNotification('Time\'s up! Game Over.', 'error');
+                this.saveProgress();
+            }
+            
+            updateDisplay() {
+                document.getElementById('level').textContent = this.currentLevel;
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('currentLevel').textContent = this.currentLevel;
+                document.getElementById('currentScore').textContent = this.score;
+                document.getElementById('highScore').textContent = StorageManager.getGameProgress('color-match').highScore || 0;
+            }
+            
+            pauseGame() {
+                this.isPaused = !this.isPaused;
+                const pauseBtn = document.querySelector('.game-btn');
+                pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+            }
+            
+            resetGame() {
+                if (confirm('Are you sure you want to reset this game?')) {
+                    this.currentLevel = 1;
+                    this.score = 0;
+                    this.timeLeft = 30;
+                    this.pattern = [];
+                    this.playerPattern = [];
+                    this.generateLevel();
+                    this.updateDisplay();
+                    this.saveProgress();
+                }
+            }
+        }
+        
+        // Initialize game when page loads
+        let game;
+        document.addEventListener('DOMContentLoaded', function() {
+            game = new ColorMatchGame();
+        });
+        
+        // Global functions for buttons
+        function resetGame() {
+            if (game) game.resetGame();
+        }
+        
+        function pauseGame() {
+            if (game) game.pauseGame();
+        }
+        
+        function checkPattern() {
+            if (game) game.checkPattern();
+        }
+    </script>
+</body>
+</html> 

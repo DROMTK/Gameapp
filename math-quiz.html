@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Quiz - PlayMate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/styles.css">
+    <style>
+        .math-quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .score-display {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .score-display h3 {
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .question-display {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .question {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        
+        .answer-input {
+            font-size: 2rem;
+            padding: 1rem;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            text-align: center;
+            width: 200px;
+            margin-bottom: 2rem;
+        }
+        
+        .answer-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+        }
+        
+        .answer-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .answer-option {
+            padding: 1rem 2rem;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .answer-option:hover {
+            background: #8B5CF6;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .answer-option.correct {
+            background: #10B981;
+            color: white;
+        }
+        
+        .answer-option.incorrect {
+            background: #EF4444;
+            color: white;
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        
+        .difficulty-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #8B5CF6;
+            background: white;
+            color: #8B5CF6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .difficulty-btn.active {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .combo-display {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .question {
+                font-size: 2rem;
+            }
+            
+            .answer-input {
+                font-size: 1.5rem;
+                width: 150px;
+            }
+            
+            .answer-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-button" onclick="navigateToGames()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to Games
+            </button>
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="#8B5CF6" stroke="#7C3AED" stroke-width="2"/>
+                    <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>Math Quiz</h1>
+            </div>
+            <div class="game-controls">
+                <button class="game-btn secondary" onclick="resetGame()">Reset</button>
+                <button class="game-btn secondary" onclick="pauseGame()">Pause</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="game-container">
+                <div class="game-header-bar">
+                    <h2 class="game-title">Math Quiz</h2>
+                    <div class="game-stats">
+                        <span>Score: <span id="currentScore">0</span></span>
+                    </div>
+                </div>
+
+                <div class="math-quiz-container">
+                    <div class="game-info">
+                        <div class="score-display">
+                            <h3>Score</h3>
+                            <div id="score">0</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Time</h3>
+                            <div id="timer">00:00</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Combo</h3>
+                            <div id="combo">0</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>High Score</h3>
+                            <div id="highScore">0</div>
+                        </div>
+                    </div>
+
+                    <div class="difficulty-selector">
+                        <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+                        <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+                        <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+                    </div>
+
+                    <div class="question-display">
+                        <div class="combo-display" id="comboDisplay" style="display: none;">
+                            Combo x<span id="comboMultiplier">1</span>!
+                        </div>
+                        <div class="question" id="question">Ready to start?</div>
+                        <input type="number" class="answer-input" id="answerInput" placeholder="Enter answer" style="display: none;">
+                        <div class="answer-options" id="answerOptions" style="display: none;">
+                            <!-- Answer options will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="game-btn primary" onclick="startGame()">Start Game</button>
+                        <button class="game-btn secondary" onclick="resetGame()">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+    <script>
+        // Math Quiz Game Logic
+        class MathQuizGame {
+            constructor() {
+                this.score = 0;
+                this.combo = 0;
+                this.currentQuestion = null;
+                this.difficulty = 'easy';
+                this.startTime = Date.now();
+                this.gameTime = 0;
+                this.timerInterval = null;
+                this.isPaused = false;
+                this.isPlaying = false;
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadProgress();
+                this.setupDifficultySelector();
+                this.updateDisplay();
+            }
+            
+            loadProgress() {
+                const progress = StorageManager.getGameProgress('math-quiz');
+                this.score = progress.score || 0;
+                document.getElementById('highScore').textContent = progress.highScore || 0;
+            }
+            
+            saveProgress() {
+                const progress = {
+                    score: this.score,
+                    highScore: Math.max(this.score, StorageManager.getGameProgress('math-quiz').highScore)
+                };
+                StorageManager.setGameProgress('math-quiz', progress);
+            }
+            
+            setupDifficultySelector() {
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.difficulty = btn.dataset.difficulty;
+                    });
+                });
+            }
+            
+            startGame() {
+                this.isPlaying = true;
+                this.score = 0;
+                this.combo = 0;
+                this.startTime = Date.now();
+                this.startTimer();
+                this.generateQuestion();
+                
+                document.querySelector('.game-btn.primary').textContent = 'Submit Answer';
+                document.querySelector('.game-btn.primary').onclick = () => this.submitAnswer();
+            }
+            
+            generateQuestion() {
+                let num1, num2, operator, answer;
+                
+                switch(this.difficulty) {
+                    case 'easy':
+                        num1 = Math.floor(Math.random() * 20) + 1;
+                        num2 = Math.floor(Math.random() * 20) + 1;
+                        operator = ['+', '-', '*'][Math.floor(Math.random() * 3)];
+                        break;
+                    case 'medium':
+                        num1 = Math.floor(Math.random() * 50) + 1;
+                        num2 = Math.floor(Math.random() * 50) + 1;
+                        operator = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)];
+                        break;
+                    case 'hard':
+                        num1 = Math.floor(Math.random() * 100) + 1;
+                        num2 = Math.floor(Math.random() * 100) + 1;
+                        operator = ['+', '-', '*', '/', '**'][Math.floor(Math.random() * 5)];
+                        break;
+                }
+                
+                // Ensure division results in whole numbers
+                if (operator === '/') {
+                    answer = num1;
+                    num1 = answer * num2;
+                } else if (operator === '**') {
+                    operator = '^';
+                    answer = Math.pow(num1, 2);
+                    num1 = Math.sqrt(answer);
+                } else {
+                    switch(operator) {
+                        case '+': answer = num1 + num2; break;
+                        case '-': answer = num1 - num2; break;
+                        case '*': answer = num1 * num2; break;
+                    }
+                }
+                
+                this.currentQuestion = { num1, num2, operator, answer };
+                
+                document.getElementById('question').textContent = `${num1} ${operator} ${num2} = ?`;
+                document.getElementById('answerInput').value = '';
+                document.getElementById('answerInput').style.display = 'block';
+                document.getElementById('answerInput').focus();
+                
+                // Generate multiple choice options
+                this.generateAnswerOptions(answer);
+            }
+            
+            generateAnswerOptions(correctAnswer) {
+                const options = [correctAnswer];
+                const answerOptions = document.getElementById('answerOptions');
+                answerOptions.innerHTML = '';
+                
+                // Generate 3 wrong answers
+                for (let i = 0; i < 3; i++) {
+                    let wrongAnswer;
+                    do {
+                        wrongAnswer = correctAnswer + Math.floor(Math.random() * 20) - 10;
+                    } while (options.includes(wrongAnswer));
+                    options.push(wrongAnswer);
+                }
+                
+                // Shuffle options
+                shuffleArray(options);
+                
+                options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-option';
+                    btn.textContent = option;
+                    btn.onclick = () => this.checkAnswer(option);
+                    answerOptions.appendChild(btn);
+                });
+                
+                answerOptions.style.display = 'grid';
+            }
+            
+            submitAnswer() {
+                const input = document.getElementById('answerInput');
+                const answer = parseInt(input.value);
+                
+                if (isNaN(answer)) {
+                    showNotification('Please enter a valid number!', 'error');
+                    return;
+                }
+                
+                this.checkAnswer(answer);
+            }
+            
+            checkAnswer(answer) {
+                const isCorrect = answer === this.currentQuestion.answer;
+                
+                if (isCorrect) {
+                    this.combo++;
+                    const comboMultiplier = Math.min(this.combo, 5);
+                    const points = 10 * comboMultiplier;
+                    this.score += points;
+                    
+                    SoundManager.playSound('success');
+                    showNotification(`Correct! +${points} points (Combo x${comboMultiplier})`, 'success');
+                    
+                    // Show combo display
+                    const comboDisplay = document.getElementById('comboDisplay');
+                    const comboMultiplierEl = document.getElementById('comboMultiplier');
+                    comboDisplay.style.display = 'block';
+                    comboMultiplierEl.textContent = comboMultiplier;
+                    
+                    setTimeout(() => {
+                        comboDisplay.style.display = 'none';
+                    }, 2000);
+                    
+                    // Highlight correct answer
+                    document.querySelectorAll('.answer-option').forEach(btn => {
+                        if (parseInt(btn.textContent) === this.currentQuestion.answer) {
+                            btn.classList.add('correct');
+                        }
+                    });
+                } else {
+                    this.combo = 0;
+                    SoundManager.playSound('error');
+                    showNotification(`Wrong! The answer was ${this.currentQuestion.answer}`, 'error');
+                    
+                    // Highlight correct and incorrect answers
+                    document.querySelectorAll('.answer-option').forEach(btn => {
+                        const btnValue = parseInt(btn.textContent);
+                        if (btnValue === this.currentQuestion.answer) {
+                            btn.classList.add('correct');
+                        } else if (btnValue === answer) {
+                            btn.classList.add('incorrect');
+                        }
+                    });
+                }
+                
+                this.updateDisplay();
+                this.saveProgress();
+                
+                setTimeout(() => {
+                    this.generateQuestion();
+                }, 1500);
+            }
+            
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused && this.isPlaying) {
+                        this.gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+                        document.getElementById('timer').textContent = formatTime(this.gameTime);
+                    }
+                }, 1000);
+            }
+            
+            updateDisplay() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('currentScore').textContent = this.score;
+                document.getElementById('combo').textContent = this.combo;
+                document.getElementById('highScore').textContent = StorageManager.getGameProgress('math-quiz').highScore || 0;
+            }
+            
+            pauseGame() {
+                this.isPaused = !this.isPaused;
+                const pauseBtn = document.querySelector('.game-btn');
+                pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+            }
+            
+            resetGame() {
+                if (confirm('Are you sure you want to reset this game?')) {
+                    this.score = 0;
+                    this.combo = 0;
+                    this.isPlaying = false;
+                    this.gameTime = 0;
+                    this.startTime = Date.now();
+                    
+                    document.getElementById('question').textContent = 'Ready to start?';
+                    document.getElementById('answerInput').style.display = 'none';
+                    document.getElementById('answerOptions').style.display = 'none';
+                    document.getElementById('comboDisplay').style.display = 'none';
+                    
+                    document.querySelector('.game-btn.primary').textContent = 'Start Game';
+                    document.querySelector('.game-btn.primary').onclick = () => this.startGame();
+                    
+                    this.updateDisplay();
+                    this.saveProgress();
+                }
+            }
+        }
+        
+        // Initialize game when page loads
+        let game;
+        document.addEventListener('DOMContentLoaded', function() {
+            game = new MathQuizGame();
+        });
+        
+        // Global functions for buttons
+        function startGame() {
+            if (game) game.startGame();
+        }
+        
+        function resetGame() {
+            if (game) game.resetGame();
+        }
+        
+        function pauseGame() {
+            if (game) game.pauseGame();
+        }
+        
+        function submitAnswer() {
+            if (game) game.submitAnswer();
+        }
+    </script>
+</body>
+</html> 

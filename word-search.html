@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search - PlayMate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/styles.css">
+    <style>
+        .word-search-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .score-display {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .score-display h3 {
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .words-to-find {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .word-item {
+            background: #f0f0f0;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .word-item.found {
+            background: #10B981;
+            color: white;
+        }
+        
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        
+        .word-grid {
+            display: grid;
+            gap: 2px;
+            background: #ddd;
+            padding: 2px;
+            border-radius: 8px;
+        }
+        
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+        }
+        
+        .grid-cell.selected {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .grid-cell.found {
+            background: #10B981;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-button" onclick="navigateToGames()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to Games
+            </button>
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="#8B5CF6" stroke="#7C3AED" stroke-width="2"/>
+                    <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>Word Search</h1>
+            </div>
+            <div class="game-controls">
+                <button class="game-btn secondary" onclick="resetGame()">Reset</button>
+                <button class="game-btn secondary" onclick="pauseGame()">Pause</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="game-container">
+                <div class="game-header-bar">
+                    <h2 class="game-title">Word Search</h2>
+                    <div class="game-stats">
+                        <span>Level: <span id="currentLevel">1</span></span>
+                        <span>Score: <span id="currentScore">0</span></span>
+                    </div>
+                </div>
+
+                <div class="word-search-container">
+                    <div class="game-info">
+                        <div class="score-display">
+                            <h3>Progress</h3>
+                            <div id="progressText">0 / 0 words found</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Time</h3>
+                            <div id="timer">00:00</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>High Score</h3>
+                            <div id="highScore">0</div>
+                        </div>
+                    </div>
+
+                    <div class="words-to-find" id="wordsToFind">
+                        <!-- Words will be populated here -->
+                    </div>
+
+                    <div class="grid-container">
+                        <div class="word-grid" id="wordGrid">
+                            <!-- Grid will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="game-btn primary" onclick="nextLevel()">Next Level</button>
+                        <button class="game-btn secondary" onclick="resetGame()">Restart</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+    <script>
+        // Word Search Game Logic
+        class WordSearchGame {
+            constructor() {
+                this.currentLevel = 1;
+                this.score = 0;
+                this.foundWords = 0;
+                this.totalWords = 0;
+                this.startTime = Date.now();
+                this.gameTime = 0;
+                this.timerInterval = null;
+                this.isPaused = false;
+                this.selectedCells = [];
+                this.words = [];
+                this.grid = [];
+                this.gridSize = 8;
+                
+                this.wordBank = [
+                    'APPLE', 'BANANA', 'CHERRY', 'DATES', 'GRAPES', 'KIWI', 'LEMON', 'MANGO',
+                    'ORANGE', 'PEACH', 'PLUM', 'RASPBERRY', 'STRAWBERRY', 'WATERMELON',
+                    'CARROT', 'CELERY', 'CUCUMBER', 'GARLIC', 'LETTUCE', 'ONION', 'PEPPER',
+                    'POTATO', 'SPINACH', 'TOMATO', 'ZUCCHINI', 'BROCCOLI', 'CAULIFLOWER',
+                    'COMPUTER', 'KEYBOARD', 'MONITOR', 'MOUSE', 'PRINTER', 'SCANNER',
+                    'SOFTWARE', 'HARDWARE', 'NETWORK', 'INTERNET', 'DATABASE', 'ALGORITHM',
+                    'PROGRAM', 'FUNCTION', 'VARIABLE', 'LOOP', 'ARRAY', 'OBJECT', 'CLASS',
+                    'METHOD', 'INTERFACE', 'ABSTRACT', 'INHERITANCE', 'POLYMORPHISM'
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadProgress();
+                this.generateLevel();
+                this.startTimer();
+                this.updateDisplay();
+            }
+            
+            loadProgress() {
+                const progress = StorageManager.getGameProgress('word-search');
+                this.currentLevel = progress.level || 1;
+                this.score = progress.score || 0;
+                document.getElementById('highScore').textContent = progress.highScore || 0;
+            }
+            
+            saveProgress() {
+                const progress = {
+                    level: this.currentLevel,
+                    score: this.score,
+                    highScore: Math.max(this.score, StorageManager.getGameProgress('word-search').highScore)
+                };
+                StorageManager.setGameProgress('word-search', progress);
+            }
+            
+            generateLevel() {
+                this.words = this.generateWords();
+                this.totalWords = this.words.length;
+                this.foundWords = 0;
+                this.grid = this.generateGrid();
+                this.renderGrid();
+                this.renderWords();
+                this.updateProgress();
+            }
+            
+            generateWords() {
+                const numWords = Math.min(3 + Math.floor(this.currentLevel / 3), 8);
+                const shuffled = shuffleArray([...this.wordBank]);
+                return shuffled.slice(0, numWords);
+            }
+            
+            generateGrid() {
+                const size = this.gridSize + Math.floor(this.currentLevel / 5);
+                const grid = Array(size).fill().map(() => Array(size).fill(''));
+                
+                // Place words in grid
+                this.words.forEach(word => {
+                    this.placeWord(grid, word);
+                });
+                
+                // Fill remaining cells with random letters
+                for (let i = 0; i < size; i++) {
+                    for (let j = 0; j < size; j++) {
+                        if (grid[i][j] === '') {
+                            grid[i][j] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+                        }
+                    }
+                }
+                
+                return grid;
+            }
+            
+            placeWord(grid, word) {
+                const directions = [
+                    [0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]
+                ];
+                
+                let attempts = 0;
+                const maxAttempts = 100;
+                
+                while (attempts < maxAttempts) {
+                    const direction = directions[Math.floor(Math.random() * directions.length)];
+                    const startRow = Math.floor(Math.random() * grid.length);
+                    const startCol = Math.floor(Math.random() * grid[0].length);
+                    
+                    if (this.canPlaceWord(grid, word, startRow, startCol, direction)) {
+                        this.placeWordInGrid(grid, word, startRow, startCol, direction);
+                        return true;
+                    }
+                    attempts++;
+                }
+                
+                return false;
+            }
+            
+            canPlaceWord(grid, word, startRow, startCol, direction) {
+                const [dr, dc] = direction;
+                
+                for (let i = 0; i < word.length; i++) {
+                    const row = startRow + i * dr;
+                    const col = startCol + i * dc;
+                    
+                    if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length) {
+                        return false;
+                    }
+                    
+                    if (grid[row][col] !== '' && grid[row][col] !== word[i]) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            placeWordInGrid(grid, word, startRow, startCol, direction) {
+                const [dr, dc] = direction;
+                
+                for (let i = 0; i < word.length; i++) {
+                    const row = startRow + i * dr;
+                    const col = startCol + i * dc;
+                    grid[row][col] = word[i];
+                }
+            }
+            
+            renderGrid() {
+                const gridContainer = document.getElementById('wordGrid');
+                gridContainer.innerHTML = '';
+                gridContainer.style.gridTemplateColumns = `repeat(${this.grid.length}, 1fr)`;
+                
+                for (let i = 0; i < this.grid.length; i++) {
+                    for (let j = 0; j < this.grid[i].length; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.textContent = this.grid[i][j];
+                        cell.dataset.row = i;
+                        cell.dataset.col = j;
+                        
+                        cell.addEventListener('mousedown', (e) => this.startSelection(e, i, j));
+                        cell.addEventListener('mouseenter', (e) => this.continueSelection(e, i, j));
+                        cell.addEventListener('mouseup', () => this.endSelection());
+                        
+                        // Touch events for mobile
+                        cell.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            this.startSelection(e, i, j);
+                        });
+                        cell.addEventListener('touchmove', (e) => {
+                            e.preventDefault();
+                            const touch = e.touches[0];
+                            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                            if (element && element.classList.contains('grid-cell')) {
+                                const row = parseInt(element.dataset.row);
+                                const col = parseInt(element.dataset.col);
+                                this.continueSelection(e, row, col);
+                            }
+                        });
+                        cell.addEventListener('touchend', (e) => {
+                            e.preventDefault();
+                            this.endSelection();
+                        });
+                        
+                        gridContainer.appendChild(cell);
+                    }
+                }
+            }
+            
+            renderWords() {
+                const wordsContainer = document.getElementById('wordsToFind');
+                wordsContainer.innerHTML = '';
+                
+                this.words.forEach(word => {
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'word-item';
+                    wordElement.textContent = word;
+                    wordElement.dataset.word = word;
+                    wordsContainer.appendChild(wordElement);
+                });
+            }
+            
+            startSelection(e, row, col) {
+                this.selectedCells = [{row, col}];
+                this.updateSelection();
+            }
+            
+            continueSelection(e, row, col) {
+                if (this.selectedCells.length > 0) {
+                    const lastCell = this.selectedCells[this.selectedCells.length - 1];
+                    if (lastCell.row !== row || lastCell.col !== col) {
+                        this.selectedCells.push({row, col});
+                        this.updateSelection();
+                    }
+                }
+            }
+            
+            endSelection() {
+                if (this.selectedCells.length > 1) {
+                    this.checkWord();
+                }
+                this.selectedCells = [];
+                this.updateSelection();
+            }
+            
+            updateSelection() {
+                // Clear all selections
+                document.querySelectorAll('.grid-cell').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+                
+                // Highlight selected cells
+                this.selectedCells.forEach(({row, col}) => {
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    if (cell) {
+                        cell.classList.add('selected');
+                    }
+                });
+            }
+            
+            checkWord() {
+                const word = this.selectedCells.map(({row, col}) => this.grid[row][col]).join('');
+                const reverseWord = word.split('').reverse().join('');
+                
+                const foundWord = this.words.find(w => w === word || w === reverseWord);
+                
+                if (foundWord) {
+                    this.foundWords++;
+                    this.score += 100 * this.currentLevel;
+                    
+                    // Mark cells as found
+                    this.selectedCells.forEach(({row, col}) => {
+                        const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                        if (cell) {
+                            cell.classList.add('found');
+                        }
+                    });
+                    
+                    // Mark word as found
+                    const wordElement = document.querySelector(`[data-word="${foundWord}"]`);
+                    if (wordElement) {
+                        wordElement.classList.add('found');
+                    }
+                    
+                    SoundManager.playSound('success');
+                    showNotification(`Found: ${foundWord}!`, 'success');
+                    
+                    this.updateProgress();
+                    
+                    if (this.foundWords >= this.totalWords) {
+                        this.levelComplete();
+                    }
+                }
+            }
+            
+            levelComplete() {
+                const timeBonus = Math.max(0, 300 - this.gameTime) * 10;
+                this.score += timeBonus;
+                
+                showNotification(`Level ${this.currentLevel} Complete! +${timeBonus} time bonus`, 'success');
+                
+                this.currentLevel++;
+                this.saveProgress();
+                
+                setTimeout(() => {
+                    this.generateLevel();
+                }, 1500);
+            }
+            
+            updateProgress() {
+                document.getElementById('progressText').textContent = `${this.foundWords} / ${this.totalWords} words found`;
+                document.getElementById('currentLevel').textContent = this.currentLevel;
+                document.getElementById('currentScore').textContent = this.score;
+            }
+            
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+                        document.getElementById('timer').textContent = formatTime(this.gameTime);
+                    }
+                }, 1000);
+            }
+            
+            updateDisplay() {
+                this.updateProgress();
+                document.getElementById('highScore').textContent = StorageManager.getGameProgress('word-search').highScore || 0;
+            }
+            
+            pauseGame() {
+                this.isPaused = !this.isPaused;
+                const pauseBtn = document.querySelector('.game-btn');
+                pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+            }
+            
+            resetGame() {
+                if (confirm('Are you sure you want to reset this game?')) {
+                    this.currentLevel = 1;
+                    this.score = 0;
+                    this.foundWords = 0;
+                    this.gameTime = 0;
+                    this.startTime = Date.now();
+                    this.generateLevel();
+                    this.updateDisplay();
+                    this.saveProgress();
+                }
+            }
+            
+            nextLevel() {
+                this.currentLevel++;
+                this.generateLevel();
+                this.updateDisplay();
+                this.saveProgress();
+            }
+        }
+        
+        // Initialize game when page loads
+        let game;
+        document.addEventListener('DOMContentLoaded', function() {
+            game = new WordSearchGame();
+        });
+        
+        // Global functions for buttons
+        function resetGame() {
+            if (game) game.resetGame();
+        }
+        
+        function pauseGame() {
+            if (game) game.pauseGame();
+        }
+        
+        function nextLevel() {
+            if (game) game.nextLevel();
+        }
+    </script>
+</body>
+</html> 

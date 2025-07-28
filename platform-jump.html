@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Jump - PlayMate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/styles.css">
+    <style>
+        .platform-jump-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .score-display {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .score-display h3 {
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .game-canvas-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        #gameCanvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: linear-gradient(to bottom, #87CEEB, #98FB98);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 768px) {
+            #gameCanvas {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-button" onclick="navigateToGames()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to Games
+            </button>
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" fill="#8B5CF6" stroke="#7C3AED" stroke-width="2"/>
+                    <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>Platform Jump</h1>
+            </div>
+            <div class="game-controls">
+                <button class="game-btn secondary" onclick="resetGame()">Reset</button>
+                <button class="game-btn secondary" onclick="pauseGame()">Pause</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="game-container">
+                <div class="game-header-bar">
+                    <h2 class="game-title">Platform Jump</h2>
+                    <div class="game-stats">
+                        <span>Score: <span id="currentScore">0</span></span>
+                    </div>
+                </div>
+
+                <div class="platform-jump-container">
+                    <div class="game-info">
+                        <div class="score-display">
+                            <h3>Score</h3>
+                            <div id="score">0</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Height</h3>
+                            <div id="height">0</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>Speed</h3>
+                            <div id="speed">1</div>
+                        </div>
+                        <div class="score-display">
+                            <h3>High Score</h3>
+                            <div id="highScore">0</div>
+                        </div>
+                    </div>
+
+                    <div class="game-canvas-container">
+                        <canvas id="gameCanvas" width="600" height="400"></canvas>
+                        <div class="game-over hidden" id="gameOver">
+                            Game Over!<br>
+                            <small>Click to restart</small>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="game-btn primary" onclick="startGame()">Start Game</button>
+                        <button class="game-btn secondary" onclick="resetGame()">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+    <script>
+        // Platform Jump Game Logic
+        class PlatformJumpGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.score = 0;
+                this.height = 0;
+                this.speed = 1;
+                this.isPlaying = false;
+                this.isPaused = false;
+                
+                // Player
+                this.player = {
+                    x: 50,
+                    y: 350,
+                    width: 20,
+                    height: 20,
+                    velocityY: 0,
+                    velocityX: 0,
+                    onGround: false
+                };
+                
+                // Platforms
+                this.platforms = [];
+                this.gravity = 0.5;
+                this.jumpPower = -12;
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadProgress();
+                this.setupEventListeners();
+                this.generateInitialPlatforms();
+                this.updateDisplay();
+                this.gameLoop();
+            }
+            
+            loadProgress() {
+                const progress = StorageManager.getGameProgress('platform-jump');
+                this.score = progress.score || 0;
+                document.getElementById('highScore').textContent = progress.highScore || 0;
+            }
+            
+            saveProgress() {
+                const progress = {
+                    score: this.score,
+                    highScore: Math.max(this.score, StorageManager.getGameProgress('platform-jump').highScore)
+                };
+                StorageManager.setGameProgress('platform-jump', progress);
+            }
+            
+            setupEventListeners() {
+                // Keyboard controls
+                document.addEventListener('keydown', (e) => {
+                    if (!this.isPlaying || this.isPaused) return;
+                    
+                    switch(e.key) {
+                        case ' ':
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            this.jump();
+                            break;
+                        case 'ArrowLeft':
+                            this.player.velocityX = -3;
+                            break;
+                        case 'ArrowRight':
+                            this.player.velocityX = 3;
+                            break;
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                        this.player.velocityX = 0;
+                    }
+                });
+                
+                // Touch controls
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.isPlaying && !this.isPaused) {
+                        this.jump();
+                    }
+                });
+                
+                // Mouse controls
+                this.canvas.addEventListener('click', () => {
+                    if (this.isPlaying && !this.isPaused) {
+                        this.jump();
+                    } else if (!this.isPlaying) {
+                        this.startGame();
+                    }
+                });
+            }
+            
+            startGame() {
+                this.isPlaying = true;
+                this.score = 0;
+                this.height = 0;
+                this.speed = 1;
+                this.player.y = 350;
+                this.player.velocityY = 0;
+                this.player.velocityX = 0;
+                this.platforms = [];
+                this.generateInitialPlatforms();
+                
+                document.querySelector('.game-btn.primary').textContent = 'Restart';
+                document.getElementById('gameOver').classList.add('hidden');
+            }
+            
+            generateInitialPlatforms() {
+                // Ground platform
+                this.platforms.push({
+                    x: 0,
+                    y: 370,
+                    width: this.canvas.width,
+                    height: 30
+                });
+                
+                // Generate some initial platforms
+                for (let i = 0; i < 5; i++) {
+                    this.generatePlatform();
+                }
+            }
+            
+            generatePlatform() {
+                const platform = {
+                    x: Math.random() * (this.canvas.width - 100),
+                    y: Math.random() * 300 + 50,
+                    width: Math.random() * 100 + 50,
+                    height: 10
+                };
+                this.platforms.push(platform);
+            }
+            
+            jump() {
+                if (this.player.onGround) {
+                    this.player.velocityY = this.jumpPower;
+                    this.player.onGround = false;
+                    SoundManager.playSound('click');
+                }
+            }
+            
+            update() {
+                if (!this.isPlaying || this.isPaused) return;
+                
+                // Update player
+                this.player.velocityY += this.gravity;
+                this.player.y += this.player.velocityY;
+                this.player.x += this.player.velocityX;
+                
+                // Keep player in bounds
+                if (this.player.x < 0) this.player.x = 0;
+                if (this.player.x > this.canvas.width - this.player.width) {
+                    this.player.x = this.canvas.width - this.player.width;
+                }
+                
+                // Check platform collisions
+                this.player.onGround = false;
+                this.platforms.forEach(platform => {
+                    if (this.player.x < platform.x + platform.width &&
+                        this.player.x + this.player.width > platform.x &&
+                        this.player.y + this.player.height > platform.y &&
+                        this.player.y < platform.y + platform.height) {
+                        
+                        if (this.player.velocityY > 0) {
+                            this.player.y = platform.y - this.player.height;
+                            this.player.velocityY = 0;
+                            this.player.onGround = true;
+                        }
+                    }
+                });
+                
+                // Update platforms
+                this.platforms.forEach(platform => {
+                    platform.y += this.speed;
+                });
+                
+                // Remove platforms that are off screen
+                this.platforms = this.platforms.filter(platform => platform.y < this.canvas.height + 50);
+                
+                // Generate new platforms
+                if (this.platforms.length < 8) {
+                    this.generatePlatform();
+                }
+                
+                // Update score and height
+                this.height += this.speed;
+                this.score = Math.floor(this.height);
+                
+                // Increase speed over time
+                this.speed = 1 + Math.floor(this.height / 1000);
+                
+                // Check if player fell
+                if (this.player.y > this.canvas.height) {
+                    this.gameOver();
+                }
+                
+                this.updateDisplay();
+            }
+            
+            render() {
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw background
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw platforms
+                this.ctx.fillStyle = '#8B4513';
+                this.platforms.forEach(platform => {
+                    this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                });
+                
+                // Draw player
+                this.ctx.fillStyle = '#8B5CF6';
+                this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+                
+                // Draw score
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '20px Poppins';
+                this.ctx.fillText(`Score: ${this.score}`, 10, 30);
+                this.ctx.fillText(`Height: ${Math.floor(this.height)}`, 10, 60);
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            gameOver() {
+                this.isPlaying = false;
+                this.saveProgress();
+                SoundManager.playSound('error');
+                showNotification(`Game Over! Score: ${this.score}`, 'error');
+                
+                document.getElementById('gameOver').classList.remove('hidden');
+            }
+            
+            updateDisplay() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('currentScore').textContent = this.score;
+                document.getElementById('height').textContent = Math.floor(this.height);
+                document.getElementById('speed').textContent = this.speed;
+                document.getElementById('highScore').textContent = StorageManager.getGameProgress('platform-jump').highScore || 0;
+            }
+            
+            pauseGame() {
+                this.isPaused = !this.isPaused;
+                const pauseBtn = document.querySelector('.game-btn');
+                pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
+            }
+            
+            resetGame() {
+                if (confirm('Are you sure you want to reset this game?')) {
+                    this.score = 0;
+                    this.height = 0;
+                    this.speed = 1;
+                    this.isPlaying = false;
+                    this.isPaused = false;
+                    this.player.y = 350;
+                    this.player.velocityY = 0;
+                    this.player.velocityX = 0;
+                    this.platforms = [];
+                    this.generateInitialPlatforms();
+                    
+                    document.querySelector('.game-btn.primary').textContent = 'Start Game';
+                    document.getElementById('gameOver').classList.add('hidden');
+                    
+                    this.updateDisplay();
+                    this.saveProgress();
+                }
+            }
+        }
+        
+        // Initialize game when page loads
+        let game;
+        document.addEventListener('DOMContentLoaded', function() {
+            game = new PlatformJumpGame();
+        });
+        
+        // Global functions for buttons
+        function startGame() {
+            if (game) game.startGame();
+        }
+        
+        function resetGame() {
+            if (game) game.resetGame();
+        }
+        
+        function pauseGame() {
+            if (game) game.pauseGame();
+        }
+    </script>
+</body>
+</html> 
